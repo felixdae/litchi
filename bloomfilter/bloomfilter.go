@@ -36,8 +36,13 @@ func FeedHash1(in []uint8, bound uint32) (out uint32) {
     return uint32(C.MurmurHash2(cin, C.int(len(in)), 0)) % bound
 }
 
-func feedHash2(in []uint8, bound uint32) (out uint32) {
-    return 2 % bound;
+func FeedHash2(in []uint8, bound uint32) (out uint32) {
+    rem := len(in) % 4
+    lw := (len(in) - 1) / 4 + 1
+    in = append(in, make([]uint8, 4 - rem)...)
+    cin := unsafe.Pointer(C.CString(string(in)))
+    defer C.free(cin)
+    return uint32(C.hashword((*C.uint32_t)(cin), C.size_t(lw), 0)) % bound
 }
 
 func RequiredBitNum(numOfSet uint32, collisionProb float64) uint32 {
@@ -81,7 +86,7 @@ func (flt *Filter) checkAtIndex(idx uint32) bool {
 func (flt *Filter) check(in []uint8) bool {
     flt.checkCount++;
     for i := uint32(0); i < flt.hashNum; i++ {
-        hashIndex := (FeedHash1(in, flt.numOfBit) + feedHash2(in, flt.numOfBit) * i) % flt.numOfBit
+        hashIndex := (FeedHash1(in, flt.numOfBit) + FeedHash2(in, flt.numOfBit) * i) % flt.numOfBit
         if !flt.checkAtIndex(hashIndex) {
             return false
         }
@@ -95,7 +100,7 @@ func (flt *Filter) set(in []uint8) {
 
     flt.checkCount++;
     for i := uint32(0); i < flt.hashNum; i++ {
-        hashIndex := (FeedHash1(in, flt.numOfBit) + feedHash2(in, flt.numOfBit) * i) % flt.numOfBit
+        hashIndex := (FeedHash1(in, flt.numOfBit) + FeedHash2(in, flt.numOfBit) * i) % flt.numOfBit
         if !flt.checkAtIndex(hashIndex) {
             flt.setAtIndex(hashIndex)
         }
