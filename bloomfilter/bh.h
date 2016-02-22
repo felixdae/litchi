@@ -1,3 +1,4 @@
+#include <stdint.h>
 unsigned int MurmurHash2 ( const void * key, int len, unsigned int seed );
 uint32_t hashword(
 const uint32_t *k,                   /* the key, an array of uint32_t values */
